@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 
+ENABLE_STR = "do()"
+DISABLE_STR = "don't()"
+
 
 @dataclass
 class MulFunc:
@@ -18,7 +21,6 @@ class MulFunc:
         return firstParam * secondParam
 
     def _is_valid(self) -> bool:
-        # TODO: misses the case mul(43,$^32)
         first_half_len = len(self.FIRST_HALF)
         last_half_len = len(self.LAST_HALF)
 
@@ -26,8 +28,8 @@ class MulFunc:
         is_valid &= len(self.mul_str) >= (
             first_half_len + last_half_len + 2 * self.MIN_DIGIT_LENGTH + 1
         )
-        is_valid &= self.mul_str[:first_half_len] == self.FIRST_HALF
-        is_valid &= self.mul_str[-last_half_len:] == self.LAST_HALF
+        is_valid &= self.mul_str.startswith(self.FIRST_HALF)
+        is_valid &= self.mul_str.endswith(self.LAST_HALF)
 
         function_params = self._process_mul_str()
         is_valid &= len(function_params) == 2
@@ -48,27 +50,29 @@ class MulFunc:
 
 def parse_input(filename: str) -> list[str]:
     with open(filename, "r") as file:
-        body = file.readlines()
+        body = file.read()
         return body
     raise AssertionError
 
 
 def main() -> None:
     body = parse_input("3.in")
-    body = "\0".join(body)
 
     sum_of_mul_evals = 0
-    for i in range(len(body) - len(MulFunc.FIRST_HALF)):
-        if body[i : i + len(MulFunc.FIRST_HALF)] == MulFunc.FIRST_HALF:
-            continue
-        last_half_index = body[i + len(MulFunc.FIRST_HALF) :].find(
-            MulFunc.LAST_HALF
-        )
-        if last_half_index == -1:
-            continue
-        sum_of_mul_evals += MulFunc(
-            body[i : i + len(MulFunc.FIRST_HALF) + last_half_index + 1]
-        ).evaluate_expr()
+    mul_enabled = True
+    for i in range(len(body)):
+        if body[i : i + len(ENABLE_STR)] == ENABLE_STR:
+            mul_enabled = True
+
+        elif body[i : i + len(DISABLE_STR)] == DISABLE_STR:
+            mul_enabled = False
+
+        elif body[i : i + len(MulFunc.FIRST_HALF)] == MulFunc.FIRST_HALF:
+            last_half_index = body.find(MulFunc.LAST_HALF, i)
+            if mul_enabled and last_half_index != -1:
+                sum_of_mul_evals += MulFunc(
+                    body[i : last_half_index + 1]
+                ).evaluate_expr()
 
     print(sum_of_mul_evals)
 
