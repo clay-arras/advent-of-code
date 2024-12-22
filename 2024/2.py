@@ -1,35 +1,58 @@
-class RedNosedReports:
-    def isSafe(report: list[int]) -> bool:
-        assert len(report) >= 2
-        isIncreasing: bool = report[0] < report[1]
-        minD, maxD = 1, 3
+from dataclasses import dataclass
 
-        isSafe = True
-        for i in range(len(report) - 1):
-            levelDiff = report[i] - report[i + 1]
-            if isIncreasing:
-                levelDiff = report[i + 1] - report[i]
-            isSafe &= levelDiff >= minD and levelDiff <= maxD
 
-        return isSafe
+@dataclass
+class Report:
+    levels: list[int]
+
+    MIN_DIFFERENCE = 1
+    MAX_DIFFERENCE = 3
+
+    def is_safe(self) -> bool:
+        assert len(self.levels) >= 2
+        is_increasing: bool = self.levels[0] < self.levels[1]
+
+        is_safe = True
+        for i in range(len(self.levels) - 1):
+            if is_increasing:
+                level_diff = self.levels[i + 1] - self.levels[i]
+            else:
+                level_diff = self.levels[i] - self.levels[i + 1]
+            is_safe &= (
+                level_diff >= self.MIN_DIFFERENCE and level_diff <= self.MAX_DIFFERENCE
+            )
+
+        return is_safe
+
+    def is_safe_with_dampener(self) -> bool:
+        is_safe = self.is_safe()
+        for i in range(len(self.levels)):
+            new_levels = self.levels[:i] + self.levels[i + 1 :]
+            is_safe |= Report(new_levels).is_safe()
+        return is_safe
 
 
 def parse_input(filename: str) -> list[str]:
-    file = open(filename, "r")
-    body = file.readlines()
-    file.close()
-    return body
+    with open(filename, "r") as file:
+        body = file.readlines()
+        body = [i.split(" ") for i in body]
+        new_body: list[list[int]] = []
+
+        for report in body:
+            new_report = [int(i) for i in report]
+            new_body.append(new_report)
+        return new_body
+
+    raise AssertionError
 
 
 def main() -> None:
     body = parse_input("2.in")
-    body = [i.split(" ") for i in body]
 
-    safeCount = 0
+    safe_count = 0
     for report in body:
-        levels = [int(i) for i in report]
-        safeCount += RedNosedReports.isSafe(report=levels)
-    print(safeCount)
+        safe_count += Report(report).is_safe_with_dampener()
+    print(safe_count)
 
 
 if __name__ == "__main__":
