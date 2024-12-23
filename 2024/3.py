@@ -10,6 +10,7 @@ class MulFunc:
 
     FIRST_HALF = "mul("
     LAST_HALF = ")"
+    SEPARATOR = ","
     MAX_DIGIT_LENGTH = 3
     MIN_DIGIT_LENGTH = 1
 
@@ -25,16 +26,14 @@ class MulFunc:
         last_half_len = len(self.LAST_HALF)
 
         is_valid = True
-        is_valid &= len(self.mul_str) >= (
-            first_half_len + last_half_len + 2 * self.MIN_DIGIT_LENGTH + 1
+        is_valid &= self.mul_str.startswith(self.FIRST_HALF) and self.mul_str.endswith(
+            self.LAST_HALF
         )
-        is_valid &= self.mul_str.startswith(self.FIRST_HALF)
-        is_valid &= self.mul_str.endswith(self.LAST_HALF)
 
         function_params = self._process_mul_str()
         is_valid &= len(function_params) == 2
         is_valid &= all(
-            len(i) >= self.MIN_DIGIT_LENGTH and len(i) <= self.MAX_DIGIT_LENGTH
+            self.MIN_DIGIT_LENGTH <= len(i) <= self.MAX_DIGIT_LENGTH
             for i in function_params
         )
         is_valid &= all(i.isdigit() for i in function_params)
@@ -42,10 +41,9 @@ class MulFunc:
         return is_valid
 
     def _process_mul_str(self) -> list[str]:
-        removed_identifier = self.mul_str[
-            len(self.FIRST_HALF) : -len(self.LAST_HALF)
-        ].split(",")
-        return removed_identifier
+        return self.mul_str[len(self.FIRST_HALF) : -len(self.LAST_HALF)].split(
+            sep=self.SEPARATOR
+        )
 
 
 def parse_input(filename: str) -> list[str]:
