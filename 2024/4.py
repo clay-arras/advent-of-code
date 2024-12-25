@@ -19,38 +19,52 @@ class Dirs(Enum):
     SW = Coord(-1, -1)
 
 
-@dataclass
 class WordFinder:
-    word: str
-    grid: list[str]
+    def __init__(self, grid: list[str], word: str):
+        self.grid = grid
+        self.word = word
+        self.width = len(grid)
+        self.height = len(grid[0])
 
     def count_num_words(self) -> int:
         num_words = 0
-        for i in range(len(self.grid)):
-            for j in range(len(self.grid[i])):
-                for k in [
-                    Dirs.N,
-                    Dirs.E,
-                    Dirs.S,
-                    Dirs.W,
-                    Dirs.NE,
-                    Dirs.NW,
-                    Dirs.SE,
-                    Dirs.SW,
-                ]:
+        for i in range(self.width):
+            for j in range(self.height):
+                for k in Dirs:
                     num_words += self._is_word_at_pos(x=i, y=j, dir=k)
+        return num_words
 
+    def count_num_x_words(self) -> int:
+        num_words = 0
+        for i in range(self.width):
+            for j in range(self.height):
+                num_words += self._is_word_x_at_pos(x=i, y=j)
         return num_words
 
     def _is_word_at_pos(self, x: int, y: int, dir: Dirs) -> bool:
         is_match = True
         for c in self.word:
-            if x < 0 or x >= len(self.grid) or y < 0 or y >= len(self.grid[x]):
+            if not self._check_in_bounds(x=x, y=y):
                 return False
             is_match &= self.grid[x][y] == c
             x += dir.value.x
             y += dir.value.y
         return is_match
+
+    def _is_word_x_at_pos(self, x: int, y: int) -> bool:
+        word_radius = len(self.word) // 2
+        nw_se: bool = self._is_word_at_pos(
+            x - word_radius, y + word_radius, dir=Dirs.SE
+        ) or self._is_word_at_pos(x + word_radius, y - word_radius, dir=Dirs.NW)
+
+        ne_sw: bool = self._is_word_at_pos(
+            x + word_radius, y + word_radius, dir=Dirs.SW
+        ) or self._is_word_at_pos(x - word_radius, y - word_radius, dir=Dirs.NE)
+
+        return nw_se and ne_sw
+
+    def _check_in_bounds(self, x: int, y: int) -> bool:
+        return 0 <= x < self.width and 0 <= y < self.height
 
 
 def parse_input(filename: str) -> list[str]:
@@ -63,7 +77,7 @@ def parse_input(filename: str) -> list[str]:
 
 def main() -> None:
     body = parse_input("4.in")
-    print(WordFinder(word="XMAS", grid=body).count_num_words())
+    print(WordFinder(word="MAS", grid=body).count_num_x_words())
 
 
 if __name__ == "__main__":
